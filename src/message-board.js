@@ -1,5 +1,12 @@
 import { createStore } from 'redux';
 
+export const ONLINE = `ONLINE`;
+export const AWAY = `AWAY`;
+export const BUSY = `BUSY`;
+export const OFFLINE = `OFFLINE`;
+
+export const UPDATE_STATUS = `UPDATE_STATUS`;
+
 const defaultState = {
   messages:[{
     date: new Date(`2017-05-15 17:06:04`),
@@ -17,9 +24,16 @@ const defaultState = {
   userStatus: `ONLINE`
 }
 
-const store = createStore((state = defaultState) => {
-  return state;
-});
+const reducer = (state=defaultState, {type, value}) => {
+  switch(type){
+    case UPDATE_STATUS:
+      return {...state, userStatus:value};
+      break;
+  }
+  return state
+}
+
+const store = createStore(reducer);
 
 const render = () => {
   const { messages, userStatus } = store.getState();
@@ -30,6 +44,21 @@ const render = () => {
         ${message.postedBy} : ${message.content}
       </div>
     `)).join(``);
+
+  document.forms.newMessage.fields.disabled = (userStatus === OFFLINE);
 }
 
+const statusUpdateAction = (value) => {
+  return {
+    type: UPDATE_STATUS,
+    value
+  }
+}
+
+document.forms.selectStatus.status.addEventListener(`change`,(e)=>{
+  store.dispatch(statusUpdateAction(e.target.value));
+});
+
 render();
+
+store.subscribe(render);
