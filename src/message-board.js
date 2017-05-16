@@ -10,6 +10,10 @@ export const OFFLINE = `OFFLINE`;
 export const UPDATE_STATUS = `UPDATE_STATUS`;
 export const CREATE_NEW_MESSAGE = `CREATE_NEW_MESSAGE`;
 
+export const READY = `READY`;
+export const WAITING = `WAITING`;
+export const NEW_MESSAGE_SERVER_ACCEPTED = `NEW_MESSAGE_SERVER_ACCEPTED`;
+
 const defaultState = {
   messages:[{
     date: new Date(`2017-05-15 17:06:04`),
@@ -24,7 +28,8 @@ const defaultState = {
     postedBy:`Tom`,
     content:`I'm going to get you Jerry!`
   }],
-  userStatus: `ONLINE`
+  userStatus: ONLINE,
+  apiCommunicationStatus: READY
 }
 
 const userStatusReducer = (state = defaultState.userStatus, {type,value}) => {
@@ -32,6 +37,16 @@ const userStatusReducer = (state = defaultState.userStatus, {type,value}) => {
     case UPDATE_STATUS:
       return value;
       break;
+  }
+  return state
+}
+
+const apiCommunicationStatusReducer = (state = READY, {type}) => {
+  switch(type) {
+    case CREATE_NEW_MESSAGE:
+      return WAITING;
+    case NEW_MESSAGE_SERVER_ACCEPTED:
+      return READY;
   }
   return state
 }
@@ -47,7 +62,8 @@ const messageReducer = (state = defaultState.messages, {type,value,postedBy,date
 
 const combinedReducer = combineReducers({
   userStatus: userStatusReducer,
-  messages: messageReducer
+  messages: messageReducer,
+  apiCommunicationStatus:apiCommunicationStatusReducer
 });
 
 const store = createStore(
@@ -63,7 +79,7 @@ document.forms.newMessage.addEventListener(`submit`, (e) => {
 })
 
 const render = () => {
-  const { messages, userStatus } = store.getState();
+  const { messages, userStatus, apiCommunicationStatus } = store.getState();
   document.getElementById(`messages`).innerHTML = messages
     .sort((a,b) => (b.date - a.date))
     .map(message => (`
@@ -72,7 +88,7 @@ const render = () => {
       </div>
     `)).join(``);
 
-  document.forms.newMessage.fields.disabled = (userStatus === OFFLINE);
+  document.forms.newMessage.fields.disabled = (userStatus === OFFLINE || apiCommunicationStatus === WAITING);
   document.forms.newMessage.newMessage.value = ``;
 }
 
@@ -85,6 +101,13 @@ const statusUpdateAction = (value) => {
 
 const newMessageAction = (content,postedBy) => {
   const date = new Date();
+
+  get(`/api/create`, (id) => {
+    store.dispatch({
+      type: NEW_MESSAGE_SERVER_ACCEPTED
+    })
+  })
+
   return {
     type: CREATE_NEW_MESSAGE,
     value: content,
