@@ -1,5 +1,6 @@
-import { createStore, combineReducers } from 'redux';
+import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { get } from './http';
+import { createLogger } from 'redux-logger';
 
 export const ONLINE = `ONLINE`;
 export const AWAY = `AWAY`;
@@ -49,7 +50,10 @@ const combinedReducer = combineReducers({
   messages: messageReducer
 });
 
-const store = createStore(combinedReducer);
+const store = createStore(
+  combinedReducer,
+  applyMiddleware(createLogger())
+);
 
 document.forms.newMessage.addEventListener(`submit`, (e) => {
   e.preventDefault();
